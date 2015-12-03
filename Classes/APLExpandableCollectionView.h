@@ -34,4 +34,6 @@
  */
 - (void)insertExpandedSection:(BOOL)isExpanded atIndex:(NSUInteger)index;
 
+@property (nonatomic, strong) NSMutableArray* expandedSections;
+
 @end

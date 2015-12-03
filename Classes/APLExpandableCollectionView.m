@@ -2,7 +2,6 @@
 
 @interface APLExpandableCollectionView () <UIGestureRecognizerDelegate, UICollectionViewDataSource>
 
-@property (nonatomic, strong) NSMutableArray* expandedSections;
 @property (nonatomic, strong) UITapGestureRecognizer* tapGestureRecognizer;
 @property (nonatomic, weak) id<UICollectionViewDataSource> myDataSource;
 
