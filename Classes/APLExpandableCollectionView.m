@@ -126,40 +126,49 @@
             BOOL willOpen = ![self.expandedSections[tappedSection] boolValue];
             NSArray* indexPaths = [self indexPathsForSection:tappedSection];
             NSArray* expandedSectionIndexPaths = willOpen ? [self expandedSectionIndexPaths] : @[];
-            [self performBatchUpdates:^{
-                if (willOpen) {
-                    [self deleteItemsAtIndexPaths:[self collapseIndexPathsForSectionIndexPaths:expandedSectionIndexPaths]];
-                    [self insertItemsAtIndexPaths:indexPaths];
-                } else {
-                    [self deleteItemsAtIndexPaths:indexPaths];
-                }
-                [self updateExpandedSectionsForSectionIndexPaths:expandedSectionIndexPaths];
-                self.expandedSections[tappedSection] = @(willOpen);
-            } completion:nil];
             
-            if (willOpen) {
-                NSIndexPath* lastItemIndexPath = [NSIndexPath indexPathForItem:[self numberOfItemsInSection:tappedCellPath.section] - 1 inSection:tappedCellPath.section];
-                UICollectionViewCell* firstItem = [self cellForItemAtIndexPath:tappedCellPath];
-                UICollectionViewCell* lastItem = [self cellForItemAtIndexPath:lastItemIndexPath];
-                CGFloat firstItemTop = firstItem.frame.origin.y;
-                CGFloat lastItemBottom = lastItem.frame.origin.y + lastItem.frame.size.height;
-                CGFloat height = self.bounds.size.height;
-                
-                if (lastItemBottom - self.contentOffset.y > height) {
-                    if (lastItemBottom - firstItemTop > height) {
-                        // using setContentOffset:animated: here because scrollToItemAtIndexPath:atScrollPosition:animated: is broken on iOS 6
-                        [self setContentOffset:CGPointMake(0., firstItemTop) animated:YES];
+            BOOL isExpandableCell = YES;
+            
+            if ([self.delegate respondsToSelector:@selector(collectionView:shouldSelectItemAtIndexPath:)]) {
+                isExpandableCell = [self.delegate collectionView:self shouldSelectItemAtIndexPath:tappedCellPath];
+            }
+            
+            if (isExpandableCell) {
+                [self performBatchUpdates:^{
+                    if (willOpen) {
+                        [self deleteItemsAtIndexPaths:[self collapseIndexPathsForSectionIndexPaths:expandedSectionIndexPaths]];
+                        [self insertItemsAtIndexPaths:indexPaths];
                     } else {
-                        [self setContentOffset:CGPointMake(0., lastItemBottom - height) animated:YES];
+                        [self deleteItemsAtIndexPaths:indexPaths];
                     }
-                }
-                if ([self.delegate respondsToSelector:@selector(collectionView:didExpandItemAtIndexPath:)]) {
-                    [self didCollapseItemsForSectionIndexPaths:expandedSectionIndexPaths];
-                    [self.delegate collectionView:self didExpandItemAtIndexPath:tappedCellPath];
-                }
-            } else {
-                if ([self.delegate respondsToSelector:@selector(collectionView:didCollapseItemAtIndexPath:)]) {
-                    [self.delegate collectionView:self didCollapseItemAtIndexPath:tappedCellPath];
+                    [self updateExpandedSectionsForSectionIndexPaths:expandedSectionIndexPaths];
+                    self.expandedSections[tappedSection] = @(willOpen);
+                } completion:nil];
+                
+                if (willOpen) {
+                    NSIndexPath* lastItemIndexPath = [NSIndexPath indexPathForItem:[self numberOfItemsInSection:tappedCellPath.section] - 1 inSection:tappedCellPath.section];
+                    UICollectionViewCell* firstItem = [self cellForItemAtIndexPath:tappedCellPath];
+                    UICollectionViewCell* lastItem = [self cellForItemAtIndexPath:lastItemIndexPath];
+                    CGFloat firstItemTop = firstItem.frame.origin.y;
+                    CGFloat lastItemBottom = lastItem.frame.origin.y + lastItem.frame.size.height;
+                    CGFloat height = self.bounds.size.height;
+                    
+                    if (lastItemBottom - self.contentOffset.y > height) {
+                        if (lastItemBottom - firstItemTop > height) {
+                            // using setContentOffset:animated: here because scrollToItemAtIndexPath:atScrollPosition:animated: is broken on iOS 6
+                            [self setContentOffset:CGPointMake(0., firstItemTop) animated:YES];
+                        } else {
+                            [self setContentOffset:CGPointMake(0., lastItemBottom - height) animated:YES];
+                        }
+                    }
+                    if ([self.delegate respondsToSelector:@selector(collectionView:didExpandItemAtIndexPath:)]) {
+                        [self didCollapseItemsForSectionIndexPaths:expandedSectionIndexPaths];
+                        [self.delegate collectionView:self didExpandItemAtIndexPath:tappedCellPath];
+                    }
+                } else {
+                    if ([self.delegate respondsToSelector:@selector(collectionView:didCollapseItemAtIndexPath:)]) {
+                        [self.delegate collectionView:self didCollapseItemAtIndexPath:tappedCellPath];
+                    }
                 }
             }
         }
